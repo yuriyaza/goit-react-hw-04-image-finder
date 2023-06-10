@@ -6,7 +6,6 @@ import * as API from "services/api";
 import { Searchbar } from "components/Searchbar/Searchbar";
 import { ImageGallery } from "components/ImageGallery/ImageGallery";
 import { Button } from "components/Button/Button";
-import { Modal } from "components/Modal/Modal";
 import { Loader } from "components/Loader/Loader";
 import css from "./App.module.css";
 
@@ -16,11 +15,16 @@ export const App = () => {
   const perPage = 12;
 
   const [images, setImages] = useState([]);
-  const [currentImage, setCurrentImage] = useState({});
-
   const [showMoreButton, setShowMoreButton] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+
+  const handleFormSubmit = (nextQuery) => {
+    if (nextQuery !== query && nextQuery !== "") {
+      setQuery(nextQuery);
+      setImages([]);
+      setPage(1);
+    }
+  };
 
   useEffect(() => {
     if (query === "") return;
@@ -40,9 +44,13 @@ export const App = () => {
 
         setImages((images) => [...images, ...appendImages]);
         setShowMoreButton(page < Math.ceil(total / perPage));
-      } catch (error) {
+      }
+
+      catch (error) {
         toast.error("An error has occurred");
-      } finally {
+      }
+
+      finally {
         setShowLoader(false);
       }
     };
@@ -50,46 +58,19 @@ export const App = () => {
     handleGetData();
   }, [query, page]);
 
-  const handleFormSubmit = (nextQuery) => {
-    if (nextQuery !== query && nextQuery !== "") {
-      setQuery(nextQuery);
-      setImages([]);
-      setPage(1);
-    }
-  };
-
   const handleMoreButtonClick = () => {
     setPage((page) => page + 1);
-  };
-
-  const handleModalOpen = (activeImage) => {
-    setCurrentImage(activeImage);
-    setShowModal(true);
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
   };
 
   return (
     <div className={css.app}>
       <Searchbar onSubmit={handleFormSubmit} />
-      <ImageGallery images={images} onImageClick={handleModalOpen} />
+      <ImageGallery images={images} />
 
       {showMoreButton && <Button onClick={handleMoreButtonClick} />}
       {showLoader && <Loader />}
-      {showModal && (
-        <Modal image={currentImage} modalClose={handleModalClose} />
-      )}
 
-      <ToastContainer
-        transition={Slide}
-        theme="colored"
-        autoClose={2500}
-        closeOnClick
-        pauseOnHover={false}
-        pauseOnFocusLoss
-      />
+      <ToastContainer transition={Slide} theme="colored" autoClose={2500} closeOnClick pauseOnHover={false} pauseOnFocusLoss />
     </div>
   );
 };
