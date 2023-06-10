@@ -1,94 +1,95 @@
-import React from 'react';
-import { ToastContainer, Slide, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from "react";
+import { ToastContainer, Slide, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-import * as API from 'services/api';
-import { Searchbar } from 'components/Searchbar/Searchbar';
-import { ImageGallery } from 'components/ImageGallery/ImageGallery';
-import { Button } from 'components/Button/Button';
-import { Modal } from 'components/Modal/Modal';
-import { Loader } from 'components/Loader/Loader';
-import css from './App.module.css';
+import * as API from "services/api";
+import { Searchbar } from "components/Searchbar/Searchbar";
+import { ImageGallery } from "components/ImageGallery/ImageGallery";
+import { Button } from "components/Button/Button";
+import { Modal } from "components/Modal/Modal";
+import { Loader } from "components/Loader/Loader";
+import css from "./App.module.css";
 
-export class App extends React.Component {
-  state = {
-    query: '',
-    page: 1,
-    perPage: 12,
-    images: [],
-    currentImage: {},
-    showMoreButton: false,
-    showLoader: false,
-    showModal: false,
-  };
+export const App = () => {
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 12;
 
-  componentDidUpdate = (_, prevState) => {
-    const { query, page } = this.state;
-    if (query !== prevState.query || page !== prevState.page) {
-      this.handleGetData(query, page);
-    }
-  };
+  const [images, setImages] = useState([]);
+  const [currentImage, setCurrentImage] = useState({});
 
-  handleGetData = async () => {
-    const { query, page, perPage } = this.state;
+  const [showMoreButton, setShowMoreButton] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-    try {
-      this.setState({ showMoreButton: false, showLoader: true });
+  useEffect(() => {
+    if (query === "") return;
 
-      const data = await API.getData(query, page, perPage);
-      const { hits: images, totalHits: total } = data;
+    const handleGetData = async () => {
+      try {
+        setShowMoreButton(false);
+        setShowLoader(true);
 
-      if (images.length === 0) {
-        toast.error('Images not found');
-        return;
+        const data = await API.getData(query, page, perPage);
+        const { hits: appendImages, totalHits: total } = data;
+
+        if (appendImages.length === 0) {
+          toast.error("Images not found");
+          return;
+        }
+
+        setImages((images) => [...images, ...appendImages]);
+        setShowMoreButton(page < Math.ceil(total / perPage));
+      } catch (error) {
+        toast.error("An error has occurred");
+      } finally {
+        setShowLoader(false);
       }
+    };
 
-      const showMoreButton = page < Math.ceil(total / perPage);
-      this.setState({ images: [...this.state.images, ...images], showMoreButton });
-    }
-    
-    catch (error) {
-      toast.error('An error has occurred');
-    }
-    
-    finally {
-      this.setState({ showLoader: false });
-    }
-  };
+    handleGetData();
+  }, [query, page]);
 
-  handleFormSubmit = (query) => {
-    if (query !== this.state.query) {
-      this.setState({ query, images: [], page: 1 });
+  const handleFormSubmit = (nextQuery) => {
+    if (nextQuery !== query && nextQuery !== "") {
+      setQuery(nextQuery);
+      setImages([]);
+      setPage(1);
     }
   };
 
-  handleMoreButtonClick = () => {
-    this.setState((prevState) => ({ page: prevState.page + 1 }));
+  const handleMoreButtonClick = () => {
+    setPage((page) => page + 1);
   };
 
-  handleModalOpen = (currentImage) => {
-    this.setState({ showModal: true, currentImage });
+  const handleModalOpen = (activeImage) => {
+    setCurrentImage(activeImage);
+    setShowModal(true);
   };
 
-  handleModalClose = () => {
-    this.setState({ showModal: false });
+  const handleModalClose = () => {
+    setShowModal(false);
   };
 
-  render() {
-    const { images, currentImage, showMoreButton, showModal, showLoader } = this.state;
-    const { handleFormSubmit, handleMoreButtonClick, handleModalOpen, handleModalClose } = this;
+  return (
+    <div className={css.app}>
+      <Searchbar onSubmit={handleFormSubmit} />
+      <ImageGallery images={images} onImageClick={handleModalOpen} />
 
-    return (
-      <div className={css.app}>
-        <Searchbar onSubmit={handleFormSubmit} />
-        <ImageGallery images={images} onImageClick={handleModalOpen} />
+      {showMoreButton && <Button onClick={handleMoreButtonClick} />}
+      {showLoader && <Loader />}
+      {showModal && (
+        <Modal image={currentImage} modalClose={handleModalClose} />
+      )}
 
-        {showMoreButton && <Button onClick={handleMoreButtonClick} />}
-        {showLoader && <Loader />}
-        {showModal && <Modal image={currentImage} onModalClose={handleModalClose} />}
-
-        <ToastContainer transition={Slide} theme='colored' autoClose={2500} closeOnClick pauseOnHover={false} pauseOnFocusLoss />
-      </div>
-    );
-  }
-}
+      <ToastContainer
+        transition={Slide}
+        theme="colored"
+        autoClose={2500}
+        closeOnClick
+        pauseOnHover={false}
+        pauseOnFocusLoss
+      />
+    </div>
+  );
+};
