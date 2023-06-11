@@ -2,20 +2,20 @@ import { useEffect } from "react";
 import PropTypes from "prop-types";
 import css from "./Modal.module.css";
 
-export const Modal = ({ image, modalClose }) => {
+export const Modal = ({ image, setShowModal }) => {
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.code === "Escape") {
-        modalClose();
-      }
+      if (e.code === "Escape") { setShowModal(false); }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => { window.removeEventListener("keydown", onKeyDown); };
-  }, [modalClose]);
+
+  }, [setShowModal]);
 
   const onBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      modalClose();
+      setShowModal(false);
     }
   };
 
@@ -25,7 +25,7 @@ export const Modal = ({ image, modalClose }) => {
         <button
           className={css.closeButton}
           type="button"
-          onClick={() => { modalClose(); }}
+          onClick={() => { setShowModal(false); }}
         ></button>
         <img src={image.largeImageURL} alt={"Tags: " + image.tags} />
       </div>

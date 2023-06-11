@@ -12,10 +12,6 @@ export const ImageGalleryItem = ({ image }) => {
     setShowModal(true);
   };
 
-  const handleModalClose = () => {
-    setShowModal(false);
-  };
-
   return (
     <>
       <img
@@ -24,7 +20,8 @@ export const ImageGalleryItem = ({ image }) => {
         alt={"Tags: " + image.tags}
         onClick={() => { handleModalOpen(image); }}
       />
-      {showModal && ( <Modal image={selectedImage} modalClose={handleModalClose} /> )}
+      
+      {showModal && <Modal image={selectedImage} setShowModal={setShowModal} />}
     </>
   );
 };
